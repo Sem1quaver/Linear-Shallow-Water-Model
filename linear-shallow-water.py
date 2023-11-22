@@ -1,55 +1,41 @@
 from __future__ import (print_function, division)
 import time
-# import time library
+
 import numpy as np
-# import numpy library as np
 import matplotlib.pyplot as plt
-# import matplotlib.pyplot library as plt
 
-experiment = '2d'
-# switch between 1d and 2d
-plot_interval = 20
-# plot every 20 time steps
+experiment = '1d'           # set to '1d' or '2d'
+plot_interval = 10          # plot every n steps
 
-# set up the figure and axes
-# Domain size
+## CONFIGURATION
+### Domain
 nx = 128
 ny = 129
-# Number of grid points in x and y
 
-Lx = 2.0e7
-# Zonal length
-Ly = 1.0e7
-# Meridional length
-H  = 100.0
-# Average depth
+H  = 100.0          # [m]  Average depth of the fluid
+Lx = 2.0e7          # [m]  Zonal width of domain
+Ly = 1.0e7          # [m]  Meridional height of domain
 
-boundary_condition = 'periodic'
-# switch between 'periodic' and 'walls'
-
+boundary_condition = 'periodic'  # either 'periodic' or 'walls'
 if experiment == '1d':
     boundary_condition = 'walls'
-# if 1d, then use walls
 
-#Coriolis and Gravity
-f0 = 1.0e-5 *1.
-# [s^-1] f = f0 + beta y _from beta plane approximation
-beta = 0
-# [m^-1 s^-1] f = f0 + beta y _from beta plane approximation
-g = 1.0
-# [m s^-2] _acceleration due to gravity
+### Coriolis and Gravity
+## Change Coriolis to zero and see the difference!
+f0 = 1.0e-5    *1.    # [s^-1] f = f0 + beta y  
+beta =  0.0           # [m^-1.s^-1]
+g = 1.0               # [m.s^-1]
 
-# Diffusion and Friction
-nu = 5.0e4
-# [m^2 s^-1] viscosity
-r = 1.0e-4
-# [s^-1] bottom drag
+### Diffusion and Friction
+nu = 5.0e4          # [m^2.s^-1] Coefficient of diffusion
+r = 1.0e-4          # Rayleigh damping at top and bottom of domain
 
-# Time-stepping
-dt = 1000.0
+dt = 1000.0         # Timestep [s]
 
-# Grid size
+
+## GRID
 # Setup the Arakawa-C Grid:
+#
 # +-- v --+
 # |       |    * (nx, ny)   h points at grid centres
 # u   h   u    * (nx+1, ny) u points on vertical edges  (u[0] and u[nx] are boundary values)
@@ -60,213 +46,175 @@ dt = 1000.0
 # variables without (u, v, h) are a view onto only the values defined
 # within the domain
 _u = np.zeros((nx+3, ny+2))
-# u points on vertical edges
 _v = np.zeros((nx+2, ny+3))
-# v points on horizontal edges
 _h = np.zeros((nx+2, ny+2))
-# h points at grid centres
 
-u = _u[1:-1, 1:-1]
-# (nx+1, ny)
-v = _v[1:-1, 1:-1]
-# (nx, ny+1)
-h = _h[1:-1, 1:-1]
-# (nx, ny)
+u = _u[1:-1, 1:-1]               # (nx+1, ny)
+v = _v[1:-1, 1:-1]               # (nx, ny+1)
+h = _h[1:-1, 1:-1]               # (nx, ny)
 
-# Combine unequal large two-dimensional arrays into three-dimensional matrices and fill the spaces with zeros
 state = np.array([u, v, h])
 
 
-dx = Lx / nx
-# grid spacing in x [m]
-dy = Ly / ny
-# grid spacing in y [m]
+dx = Lx / nx            # [m]
+dy = Ly / ny            # [m]
 
-# positions of the value points in
-# the x and y directions
+# positions of the value points in [m]
 ux = (-Lx/2 + np.arange(nx+1)*dx)[:, np.newaxis]
-# Add a new axis to ux
-uy = (-Ly/2 + np.arange(ny+1)*dy)[np.newaxis, :]
-# Add a new axis to uy
-
 vx = (-Lx/2 + dx/2.0 + np.arange(nx)*dx)[:, np.newaxis]
-# Add a new axis to vx
-vy = (-Ly/2 + dy/2.0 + np.arange(ny)*dy)[np.newaxis, :]
-# Add a new axis to vy
 
-hx = vx 
-hy = vy
+vy = (-Ly/2 + np.arange(ny+1)*dy)[np.newaxis, :]
+uy = (-Ly/2 + dy/2.0 + np.arange(ny)*dy)[np.newaxis, :]
 
-# Initial conditions
-t = 0.0
-# [s] Time since start of simulation
-tc = 0
-# [1] Number of integration steps taken
+hx = vx
+hy = uy
+
+t = 0.0                 # [s] Time since start of simulation
+tc = 0                  # [1] Number of integration steps taken
 
 
-## Grid Function
-# These functions are used to set grids and compute the grid parameters
+## GRID FUNCTIONS
+# These functions perform calculations on the grid such as calculating
+# derivatives of fields or setting boundary conditions
 
 def update_boundaries():
-    # Update the boundary values of u, v and h
-    # according to the boundary conditions
 
-    # 1. Periodic Boundary Conditions
-    # - Flow cycles form left to right
-    # - u[0] = u[nx]
+    # 1. Periodic Boundaries
+    #    - Flow cycles from left-right-left
+    #    - u[0] == u[nx]
     if boundary_condition == 'periodic':
         _u[0, :] = _u[-3, :]
-        # u[0] = u[nx]
         _u[1, :] = _u[-2, :]
-        # u[1] = u[nx+1]
         _u[-1, :] = _u[2, :]
-        # u[nx] = u[0]
         _v[0, :] = _v[-2, :]
-        # v[0] = v[nx+1]
         _v[-1, :] = _v[1, :]
-        # v[nx] = v[1]
         _h[0, :] = _h[-2, :]
-        # h[0] = h[nx+1]
         _h[-1, :] = _h[1, :]
-        # h[nx] = h[1]
 
-    # 2. Walls Boundary Conditions
-    # - No zonal (u) flow through the left and right walls
-    # - Zero x-derivative in v and h
-    elif boundary_condition == 'walls':
+
+    # 2. Solid walls left and right
+    #    - No zonal (u) flow through the left and right walls
+    #    - Zero x-derivative in v and h
+    if boundary_condition == 'walls':
         # No flow through the boundary at x=0
         _u[0, :] = 0
-        # u[0] = 0
-        _u[-1, :] = 0
-        # u[nx] = 0
         _u[1, :] = 0
-        # u[1] = 0
+        _u[-1, :] = 0
         _u[-2, :] = 0
-        # u[nx+1] = 0
-        
-        # Zero x-derivative in v and h
-        _v[0, :] = -_v[1, :]
-        # v[0] = -v[1]
-        _v[-1, :] = -_v[-2, :]
-        # v[nx] = -v[nx+1]
+
+        # free-slip of other variables: zero-derivative
+        _v[0, :] = _v[1, :]
+        _v[-1, :] = _v[-2, :]
         _h[0, :] = _h[1, :]
-        # h[0] = h[1]
         _h[-1, :] = _h[-2, :]
-        # h[nx] = h[nx+1]
 
-    # Applied for both boundary conditions
+    # This applied for both boundary cases above
     for field in state:
-        # Free-slip boundary conditions
+        # Free-slip of all variables at the top and bottom
         field[:, 0] = field[:, 1]
-        # field[:, 0] = field[:, 1]
         field[:, -1] = field[:, -2]
-        # field[:, ny+1] = field[:, ny]
 
-        # Fix corners to be average of adjacent values
-        field[0, 0] = 0.5*(field[0, 1] + field[1, 0])
-        # field[0, 0] = 0.5*(field[0, 1] + field[1, 0])
-        field[-1, 0] = 0.5*(field[-1, 1] + field[-2, 0])
-        # field[nx+1, 0] = 0.5*(field[nx+1, 1] + field[nx, 0])
-        field[0, -1] = 0.5*(field[0, -2] + field[1, -1])
-        # field[0, ny+1] = 0.5*(field[0, ny] + field[1, ny+1])
+    	# fix corners to be average of neighbours
+        field[0, 0] =  0.5*(field[1, 0] + field[0, 1])
+        field[-1, 0] = 0.5*(field[-2, 0] + field[-1, 1])
+        field[0, -1] = 0.5*(field[1, -1] + field[0, -2])
         field[-1, -1] = 0.5*(field[-1, -2] + field[-2, -1])
-        # field[nx+1, ny+1] = 0.5*(field[nx+1, ny] + field[nx, ny+1])
+
 
 def diffx(psi):
-    # Compute the x-derivative of psi on a single grid
-    # using central differences
-    # using first-order central differences/finite differences
+    """Calculate ∂/∂x[psi] over a single grid square.
+
+    i.e. d/dx(psi)[i,j] = (psi[i+1/2, j] - psi[i-1/2, j]) / dx
+
+    The derivative is returned at x points at the midpoint between
+    x points of the input array."""
     global dx
-    return (psi[1:, :] - psi[:-1, :]) / dx
+    return (psi[1:,:] - psi[:-1,:]) / dx
 
 def diff2x(psi):
-    # Compute the x-second derivative of psi on a single grid
-    # using central differences
-    global dx
-    return (psi[2:, :] - 2*psi[1:-1, :] + psi[:-2, :]) / dx**2
+    """Calculate ∂2/∂x2[psi] over a single grid square.
 
-def diffy(psi):
-    # Compute the y-derivative of psi on a single grid
-    # using central differences
-    # using second-order central differences/finite differences
-    global dy
-    return (psi[:, 1:] - psi[:, :-1]) / dy
+    i.e. d2/dx2(psi)[i,j] = (psi[i+1, j] - psi[i, j] + psi[i-1, j]) / dx^2
+
+    The derivative is returned at the same x points as the
+    x points of the input array, with dimension (nx-2, ny)."""
+    global dx
+    return (psi[:-2, :] - 2*psi[1:-1, :] + psi[2:, :]) / dx**2
 
 def diff2y(psi):
-    # Compute the y-second derivative of psi on a single grid
-    # using central differences
+    """Calculate ∂2/∂y2[psi] over a single grid square.
+
+    i.e. d2/dy2(psi)[i,j] = (psi[i, j+1] - psi[i, j] + psi[i, j-1]) / dy^2
+
+    The derivative is returned at the same y points as the
+    y points of the input array, with dimension (nx, ny-2)."""
     global dy
-    return (psi[:, 2:] - 2*psi[:, 1:-1] + psi[:, :-2]) / dy**2
+    return (psi[:, :-2] - 2*psi[:, 1:-1] + psi[:, 2:]) / dy**2
+
+def diffy(psi):
+    """Calculate ∂/∂y[psi] over a single grid square.
+
+    i.e. d/dy(psi)[i,j] = (psi[i, j+1/2] - psi[i, j-1/2]) / dy
+
+    The derivative is returned at y points at the midpoint between
+    y points of the input array."""
+    global dy
+    return (psi[:, 1:] - psi[:,:-1]) / dy
 
 def centre_average(phi):
-    # Compute the average of phi at the centre of the grid
-    # using four-point averaging 
-    return 0.25*(phi[1:, 1:] + phi[1:, :-1] + phi[:-1, 1:] + phi[:-1, :-1])
-
-def x_average(phi):
-    # Compute the average of phi in the x-direction
-    # If phi has shape (nx, ny), the result will have shape (nx-1, ny)
-    return 0.5*(phi[1:, :] + phi[:-1, :])
+    """Returns the four-point average at the centres between grid points."""
+    return 0.25*(phi[:-1,:-1] + phi[:-1,1:] + phi[1:, :-1] + phi[1:,1:])
 
 def y_average(phi):
-    # Compute the average of phi in the y-direction
-    # If phi has shape (nx, ny), the result will have shape (nx, ny-1)
-    return 0.5*(phi[:, 1:] + phi[:, :-1])
+    """Average adjacent values in the y dimension.
+    If phi has shape (nx, ny), returns an array of shape (nx, ny - 1)."""
+    return 0.5*(phi[:,:-1] + phi[:,1:])
 
-def divergence(u, v):
-    # Compute the divergence of the vector field (u, v)
-    # Return the horizontal divergence at h points
+def x_average(phi):
+    """Average adjacent values in the x dimension.
+    If phi has shape (nx, ny), returns an array of shape (nx - 1, ny)."""
+    return 0.5*(phi[:-1,:] + phi[1:,:])
+
+def divergence():
+    """Returns the horizontal divergence at h points."""
     return diffx(u) + diffy(v)
 
 def del2(phi):
-    # Compute the Laplacian of phi
-    # Return the Laplacian at h points
-    return diff2x(phi)[:,1:-1] + diff2y(phi)[1:-1,:]
+    """Returns the Laplacian of phi."""
+    return diff2x(phi)[:, 1:-1] + diff2y(phi)[1:-1, :]
 
 def uvatuv():
-    # Calculate the value of u at v and v at u
-    global _u,_v
+    """Calculate the value of u at v and v at u."""
+    global _u, _v
     ubar = centre_average(_u)[1:-1, :]
-    # ubar = centre_average(_u)[1:-1, :]
     vbar = centre_average(_v)[:, 1:-1]
-    # vbar = centre_average(_v)[:, 1:-1]
     return ubar, vbar
 
 def uvath():
-    # Calculate the value of u at h and v at h
     global u, v
     ubar = x_average(u)
-    # ubar = x_average(u)
     vbar = y_average(v)
-    # vbar = y_average(v)
     return ubar, vbar
 
 def absmax(psi):
-    # Compute the maximum absolute value of psi
     return np.max(np.abs(psi))
 
 
-
-## Dynamics
-# These functions compute the dynamics of the system
-
+## DYNAMICS
+# These functions calculate the dynamics of the system we are interested in
 def forcing():
-    # Add some external forcing terms to the u, v and h equations.
-    # This is where we can add wind stress, heat fluxes, etc.
-    # This function should return a state array (du, dv, dh)
-    # Which will be added to the RHS of the equations(1)(2)(3)
+    """Add some external forcing terms to the u, v and h equations.
+    This function should return a state array (du, dv, dh) that will
+    be added to the RHS of equations (1), (2) and (3) when
+    they are numerically integrated."""
     global u, v, h
     du = np.zeros_like(u)
     dv = np.zeros_like(v)
     dh = np.zeros_like(h)
-    # Set empty arrays for du, dv, dh, waiting to be filled
-    # Calculate some forcing terms here
+    # Calculate some forcing terms here...
     return np.array([du, dv, dh])
 
-# Set the sponges
-# Which are active at the top and bottom of the domain by apply Rayleigh friction
 sponge_ny = ny//7
-# sponge layer thickness
 sponge = np.exp(-np.linspace(0, 5, sponge_ny))
 def damping(var):
     # sponges are active at the top and bottom of the domain by applying Rayleigh friction
