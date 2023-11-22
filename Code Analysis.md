@@ -75,7 +75,7 @@ dt = 1000.0
 
 设置模型的物理常数，`g` 为重力加速度，单位是米每秒平方；`nu` 为扩散系数，单位是平方米每秒；`r` 为顶部和底部的瑞利阻尼。
 
-本模型采用了 *$\beta$-平面近似* 计算科里奥利力，在这种近似中，科里奥利参数被表示为 $f = f_0 + \beta y$ ，模拟小范围或中等范围的流动时，科里奥利参数的空间变化通常可以被忽略，如果考虑全球范围的潮汐，则需要更精细的模拟
+本模型采用了 $\beta$-平面近似 计算科里奥利力，在这种近似中，科里奥利参数被表示为 $f = f_0 + \beta y$ ，模拟小范围或中等范围的流动时，科里奥利参数的空间变化通常可以被忽略，如果考虑全球范围的潮汐，则需要更精细的模拟
 
 `f0` 是基础科里奥利参数，`beta` 是科里奥利参数随纬度变化的系数。
 
@@ -388,7 +388,7 @@ def uvath():
 
 调用 `x_average(phi)` 函数计算 `u` 在 x 方向上的平均值，得到的结果赋值给 `ubar`
 
->>`uvatuv()` 与 `uvath()` 的对比：
+> `uvatuv()` 与 `uvath()` 的对比：
 > - 处理的变量对象不同：`uvatuv()` 函数处理全局变量速度场 `_u` 和 `_v` ；`uvath()` 函数处理全局变量速度场 `u` 和 `v`
 > - 使用的计算函数不同：`uvatuv()` 函数使用了 `centre_average(phi)` 函数，用网格点四角计算中心值；而 `uvath()` 函数使用 `x_average(phi)` 函数，计算目标值沿特定方向的均值
 > - 返回数组形状相同，这两个函数都返回两个新的数组，其形状比输入数组的形状在对应方向上都小1，因为平均值操作会减少一个元素
@@ -495,26 +495,26 @@ def rhs():
 函数 `rhs()` 用于计算基本方程组
 
 `u_at_v, v_at_u = uvatuv()` 调用 `uvatuv` 函数，并将返回的两个值赋给 `u_at_v` 和 `v_at_u`。这两个值分别代表对 u 沿 x 做微分和对 v 沿 y 做微分，即得：
->>$$u\_at\_v=\frac{\partial u}{\partial x}$$  
->>$$v\_at\_u=\frac{\partial v}{\partial y}$$
+>$$u\_at\_v=\frac{\partial u}{\partial x}$$  
+>$$v\_at\_u=\frac{\partial v}{\partial y}$$
 
 `h_rhs = -H*divergence() + nu*del2(_h) - r*damping(h)` 计算了方程 3 的右侧，即得：
->>$$h\_rhs=-H(\frac{\partial u}{\partial x}+\frac{\partial v}{\partial y})+nu\cdot \nabla^2h-r\cdot h' $$
+>$$h\_rhs=-H(\frac{\partial u}{\partial x}+\frac{\partial v}{\partial y})+nu\cdot \nabla^2h-r\cdot h' $$
 
 `dhdx = diffx(_h)[:, 1:-1]` 计算了 `_h` 在 x 方向的差分，并将结果的第 1 列到倒数第 2 列赋给 `dhdx` 
 
 `dhdy = diffy(_h)[1:-1, :]` 计算了 `_h` 的 y 方向的差分，并将结果的第 1 行到倒数第 2 行赋给 `dhdy`，即得：
 
->>$$dhdx=\frac{\partial h}{\partial x}$$
->>$$dhdy=\frac{\partial h}{\partial y}$$
+>$$dhdx=\frac{\partial h}{\partial x}$$
+>$$dhdy=\frac{\partial h}{\partial y}$$
 
 `u_rhs = (f0 + beta*uy)*v_at_u - g*dhdx + nu*del2(_u) - r*damping(u)` 计算方程 1 的右侧，即得：
 
->>$$u\_rhs=(f_0+\beta \cdot u_y)\frac{\partial u}{\partial x}-g\cdot \frac{\partial h}{\partial x}+nu\cdot \nabla^2u-r\cdot u'$$
+>$$u\_rhs=(f_0+\beta \cdot u_y)\frac{\partial u}{\partial x}-g\cdot \frac{\partial h}{\partial x}+nu\cdot \nabla^2u-r\cdot u'$$
 
 `v_rhs = -(f0 + beta*vy)*u_at_v - g*dhdy + nu*del2(_v) - r*damping(v)` 计算方程 2 的右侧，即得：
 
->>$$v\_rhs=-(f_0+\beta \cdot v_y)\frac{\partial v}{\partial y}-g\cdot \frac{\partial h}{\partial y}+nu\cdot \nabla^2v-r\cdot v'$$
+>$$v\_rhs=-(f_0+\beta \cdot v_y)\frac{\partial v}{\partial y}-g\cdot \frac{\partial h}{\partial y}+nu\cdot \nabla^2v-r\cdot v'$$
 
 `return np.array([u_rhs, v_rhs, h_rhs]) + forcing()` 函数返回一个新的数组，它是 `u` , `v` 和 `h` 方程的右侧加上外部强迫项的结果
 
@@ -563,16 +563,16 @@ def step():
 
 此函数根据时间步计数器 `tc` 的值，会选择不同的时间积分方案。如果 `tc` 为 0，使用`前向欧拉方法`；如果 `tc` 为 1，使用`二阶亚当斯-巴什福斯方法`；如果 `tc` 大于 1，使用`三阶亚当斯-巴什福斯方法`
 
->>前向欧拉方法、二阶亚当斯-巴什福斯方法与三阶亚当斯-巴什福斯方法
->> - 前向欧拉方法：显式的一阶差分方法，只需要当前步的信息。实现简单但精度较低，且对于某些问题可能不稳定。
->>>>$$ y(n+1) = y(n) + h\cdot f(t(n), y(n))$$
->>其中，y(n)是当前步的解，h 是步长，f(t(n), y(n))是微分方程的右侧
->> - 二阶亚当斯-巴什福斯方法：这是一种二阶精度的方法，需要当前步和前一步的信息。相比于前向欧拉方法，它的精度更高，但实现起来稍微复杂一些。
->>>>$$y(n+2) = y(n+1) + h/2 \cdot [3\cdot f(t(n+1), y(n+1)) - f(t(n), y(n))]$$
->>其中，y(n+1)和 y(n)分别是当前步和前一步的解，h 是步长，f(t(n+1), y(n+1))和 f(t(n), y(n))分别是当前步和前一步的微分方程的右侧
->> - 三阶亚当斯-巴什福斯方法：这是一种三阶精度的方法，需要当前步，前一步和前两步的信息。它的精度比二阶亚当斯-巴什福斯方法更高，但实现起来更复杂。
->>>>$$y(n+3) = y(n+2) + h/12 \cdot [23\cdot f(t(n+2), y(n+2)) - 16\cdot f(t(n+1), y(n+1)) + 5\cdot f(t(n), y(n))]$$
->>其中，y(n+2)，y(n+1)和 y(n)分别是当前步，前一步和前两步的解，h 是步长，f(t(n+2), y(n+2))，f(t(n+1), y(n+1))和 f(t(n), y(n))分别是当前步，前一步和前两步的微分方程的右侧。
+>前向欧拉方法、二阶亚当斯-巴什福斯方法与三阶亚当斯-巴什福斯方法
+> - 前向欧拉方法：显式的一阶差分方法，只需要当前步的信息。实现简单但精度较低，且对于某些问题可能不稳定。
+>>$$ y(n+1) = y(n) + h\cdot f(t(n), y(n))$$
+>其中，y(n)是当前步的解，h 是步长，f(t(n), y(n))是微分方程的右侧
+> - 二阶亚当斯-巴什福斯方法：这是一种二阶精度的方法，需要当前步和前一步的信息。相比于前向欧拉方法，它的精度更高，但实现起来稍微复杂一些。
+>>$$y(n+2) = y(n+1) + h/2 \cdot [3\cdot f(t(n+1), y(n+1)) - f(t(n), y(n))]$$
+>其中，y(n+1)和 y(n)分别是当前步和前一步的解，h 是步长，f(t(n+1), y(n+1))和 f(t(n), y(n))分别是当前步和前一步的微分方程的右侧
+> - 三阶亚当斯-巴什福斯方法：这是一种三阶精度的方法，需要当前步，前一步和前两步的信息。它的精度比二阶亚当斯-巴什福斯方法更高，但实现起来更复杂。
+>>$$y(n+3) = y(n+2) + h/12 \cdot [23\cdot f(t(n+2), y(n+2)) - 16\cdot f(t(n+1), y(n+1)) + 5\cdot f(t(n), y(n))]$$
+>其中，y(n+2)，y(n+1)和 y(n)分别是当前步，前一步和前两步的解，h 是步长，f(t(n+2), y(n+2))，f(t(n+1), y(n+1))和 f(t(n), y(n))分别是当前步，前一步和前两步的微分方程的右侧。
 
 `newstate = state + dt1*dstate + dt2*_pdstate + dt3*_ppdstate` 用于计算新的状态
 
@@ -618,9 +618,9 @@ h[:] = h0
 
 `gx = 2.0e6，gy = 0.0，gr = 2.0e5`，定义了一个高斯扰动的位置`(gx, gy)`和半径`gr`
 
->> - 高斯扰动
->> 通常指的是遵循正态分布的扰动。在这段代码中，高斯扰动是指在二维空间中，以某一点为中心，按照高斯分布形状产生的扰动，以点 (gx, gy) 为中心，半径为 gr，扰动的大小遵循高斯分布
->>>>$$h_0 = np.exp(-((hx - gx)^2 + (hy - gy)^2)/(2\cdot gr^2))\cdot H\cdot 0.01$$
+> - 高斯扰动
+> 通常指的是遵循正态分布的扰动。在这段代码中，高斯扰动是指在二维空间中，以某一点为中心，按照高斯分布形状产生的扰动，以点 (gx, gy) 为中心，半径为 gr，扰动的大小遵循高斯分布
+>>$$h_0 = np.exp(-((hx - gx)^2 + (hy - gy)^2)/(2\cdot gr^2))\cdot H\cdot 0.01$$
 
 `u0 = u * 0.0，v0 = v * 0.0` 设置速度场 `u` 和 `v` 的初始条件为0
 
