@@ -10,7 +10,7 @@
 
 ## 项目结构：
 
-### 1 理论基础 Theoretical Basis
+### 1 理论基础 Theoretical Basis [Theoretical Basis](Theoretical Basis.md)
 
 - 1.1 基本方程组
 - 1.2 代码实现
