@@ -15,7 +15,7 @@
 - 1.1 基本方程组
 - 1.2 代码实现
 
-### 2 代码分析 Code Analysis
+### 2 代码分析 [Code Analysis](https://github.com/Sem1quaver/Linear-Shallow-Water-Model/blob/main/Code%20Analysis.md)
 
 - 2.1 基础部分 BASE COMPONENT
 - 2.2 函数部分 FUNCTIONS
@@ -23,7 +23,7 @@
 - 2.4 绘图部分 PLOTTING
 - 2.5 运行部分 RUN
 
-### 3 结论分析 Conclusion Analysis
+### 3 结论分析 [Conclusion Analysis](https://github.com/Sem1quaver/Linear-Shallow-Water-Model/blob/main/Conclusion%20Analysis.md)
 
 - 3.1 1D 情况
 - 3.2 2D 情况
