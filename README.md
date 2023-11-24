@@ -10,7 +10,7 @@
 
 ## 项目结构：
 
-### 1 理论基础 Theoretical Basis[https://github.com/Sem1quaver/Linear-Shallow-Water-Model/blob/837f1470579bc371160b19ed4716cfbc7f714d31/Theoretical%20Basis.md](url)
+### 1 理论基础 [Theoretical Basis](Theoretical Basis.md)
 
 - 1.1 基本方程组
 - 1.2 代码实现
