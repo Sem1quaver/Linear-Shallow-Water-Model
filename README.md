@@ -10,20 +10,20 @@
 
 ## 项目结构：
 
-### 理论基础 Theoretical Basis
+### 1 理论基础 Theoretical Basis
 
-- 基本方程组
-- 代码实现
+- 1.1 基本方程组
+- 1.2 代码实现
 
-### 代码分析 Code Analysis
+### 2 代码分析 Code Analysis
 
-- 基础部分 BASE COMPONENT
-- 函数部分 FUNCTIONS
-- 初始条件 INITAIL CONDITIONS
-- 绘图部分 PLOTTING
-- 运行部分 RUN
+- 2.1 基础部分 BASE COMPONENT
+- 2.2 函数部分 FUNCTIONS
+- 2.3 初始条件 INITAIL CONDITIONS
+- 2.4 绘图部分 PLOTTING
+- 2.5 运行部分 RUN
 
-### 结论分析 Conclusion Analysis
+### 3 结论分析 Conclusion Analysis
 
-- 1D 情况
-- 2D 情况
+- 3.1 1D 情况
+- 3.2 2D 情况
