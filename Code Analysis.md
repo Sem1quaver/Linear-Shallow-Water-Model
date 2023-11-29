@@ -147,7 +147,7 @@ hy = uy
 
 `np.arange(nx+1)*dx` 将上述整数数组中的每个元素乘以 dx，得到从 0 到 dx$\cdot$nx 的数组，每个元素之间的间隔为 dx；
 
-`-Lx/2 + np.arange(nx+1)*dx` 将上述数组中的每个元素减去 Lx/2，结果是一个从 -Lx/2到 -Lx/2 + dx$\cdot$nx 的数组，每个元素之间的间隔为 dx，即表示 u 点在 x 方向上的位置；
+`-Lx/2 + np.arange(nx+1)*dx` 将上述数组中的每个元素减去 Lx/2，结果是一个从 -Lx/2到 -Lx/2 + dx*nx 的数组，每个元素之间的间隔为 dx，即表示 u 点在 x 方向上的位置；
 
 `(-Lx/2 + np.arange(nx+1)*dx)[:, np.newaxis]` 将上述一维数组新增加一行转换为二维数组。新数组的形状为 (nx+1, 1)
 
