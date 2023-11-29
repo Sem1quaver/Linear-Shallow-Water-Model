@@ -510,11 +510,11 @@ def rhs():
 
 `u_rhs = (f0 + beta*uy)*v_at_u - g*dhdx + nu*del2(_u) - r*damping(u)` 计算方程 1 的右侧，即得：
 
->$$u\_rhs=(f_0+\beta \cdot u_y)\frac{\partial u}{\partial x}-g\cdot \frac{\partial h}{\partial x}+nu\cdot \nabla^2u-r\cdot u'$$
+>$$u\_{rhs}=(f_0+\beta \cdot u_y)\frac{\partial u}{\partial x}-g\cdot \frac{\partial h}{\partial x}+nu\cdot \nabla^2u-r\cdot u'$$
 
 `v_rhs = -(f0 + beta*vy)*u_at_v - g*dhdy + nu*del2(_v) - r*damping(v)` 计算方程 2 的右侧，即得：
 
->$$v\_rhs=-(f_0+\beta \cdot v_y)\frac{\partial v}{\partial y}-g\cdot \frac{\partial h}{\partial y}+nu\cdot \nabla^2v-r\cdot v'$$
+>$$v\_{rhs}=-(f_0+\beta \cdot v_y)\frac{\partial v}{\partial y}-g\cdot \frac{\partial h}{\partial y}+nu\cdot \nabla^2v-r\cdot v'$$
 
 `return np.array([u_rhs, v_rhs, h_rhs]) + forcing()` 函数返回一个新的数组，它是 `u` , `v` 和 `h` 方程的右侧加上外部强迫项的结果
 
